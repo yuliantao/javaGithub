@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"	
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd">
+	
+	<!-- 加载配置文件 -->
+	<context:property-placeholder location="classpath:mybatis/db.properties"/>
+	
+	<!-- 数据源，使用dbcp -->
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+			<property name="driverClassName" value="${jdbc.driver}" />
+			<property name="url" value="${jdbc.url}" />
+			<property name="username" value="${jdbc.username}" />
+			<property name="password" value="${jdbc.password}" />
+			<property name="maxActive" value="10"/>
+			<property name="maxIdle" value="5"/>
+	</bean>
+	<!-- 另外一种数据库配置方式 -->
+	<!--  
+	 <bean id="pmsDatasource" class="org.apache.ibatis.datasource.pooled.PooledDataSource">  
+        <property name="driver" value="${pms.driver}" />  
+        <property name="url" value="${pms.url}" />  
+        <property name="username" value="${pms.username}" />  
+        <property name="password" value="${pms.password}" />  
+    </bean> 
+    -->
+	
+	<!-- 配置sqlSessionFactory -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<!-- 加载mybatis的配置文件 -->
+		<property name="configLocation" value="mybatis/SqlMapConfig.xml"/>
+		<!-- 数据源 -->
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+	
+	<!-- 老式方法：配置maper实现自动生成代理
+	<bean id="OrdersMapperCustom" class="org.mybatis.spring.mapper.MapperFactoryBean">
+		<property name="mapperInterface"  value="cn.ylt.ssm.mapper.OrdersMapperCustom"/>
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"></property>
+	</bean> 
+	--> 	
+	
+	<!-- 新方法：通过包批量扫描加载后注入 
+	前提:配置文件名和类名必须一致，接口方法和statement方法id一致，配置文件和接口文件必须在一个目录
+	自动扫描出来的mapper的bean的id为mapper类名（注意：首字母小写）
+	-->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<!-- 扫描指定包名 
+		如果扫描多个包，每个包中间使用半角的逗号分隔
+		 -->
+		<property name="basePackage" value="cn.ylt.ssm.mapper"/>
+		<!-- 选择sqlSessionFactoryBeanName而不是 sqlSessionFactory原因是后者在这种扫描模式下是先优于读取配置文件，采用sqlSessionFactoryBeanName
+		后可以避免该问题。如果整个系统就一个数据源，可以删除下面这个配置，浏览会自动去找到唯一数据源，如果有多个数据源（SqlSessionFactoryBean）则要配置-->
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+	</bean>
+	
+	
+</beans>
+
+
+
+
+
+
+
+
+
+
+

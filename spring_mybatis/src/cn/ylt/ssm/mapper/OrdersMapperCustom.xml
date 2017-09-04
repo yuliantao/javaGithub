@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace命名空间，作用是对sql进行分类化管理，
+注意：如果使用mapper代理方法开发，namespace就有特殊重要作用,自动生成代理类对象
+ -->
+<mapper namespace="cn.ylt.ssm.mapper.OrdersMapperCustom">
+
+	<!-- 开启本mapper的二级缓存 ,默认是mybatis提供的缓存类
+	type:指定cache接口的实现类型，默认是mybatis自带的perpetualCache
+	要和redis或者ehcache整合，需要配置type为redis或者ehcache实现cache接口的类型
+	
+	<cache></cache>-->
+	
+	<!-- 查询订单关联查询用户,select中有个属性 useCache="false"默认是true -->
+	<select id="findOrdersUser" resultType="cn.ylt.ssm.po.OrdersCustom" >
+		select t1.*,t2.username,t2.sex,t2.address 
+		from orders t1
+		inner join user t2 on t1.user_id=t2.id 
+		order by t1.id
+	</select>
+	
+	<!-- 关联查询resultMap定义 -->
+	<resultMap type="cn.ylt.ssm.po.Orders" id="OrdersUserResultMap">
+		<!-- 配置订单信息 -->
+		<id column="id" property="id"/><!-- id标签标识唯一标识的列。如果多个列组成唯一标识就配置多个id元素 -->
+		<result column="user_id" property="user_id"/>
+		<result column="number" property="number"/>
+		<result column="createtime" property="createtime"/>
+		<result column="note" property="note"/>
+		<!-- 配置用户信息 -->
+		<!-- association标识一对一信息 ，其中property指定映射到对象中的那个属性，-->
+		<association property="user" javaType="cn.ylt.ssm.po.User">
+			<id column="user_id" property="id"/>
+			<result column="username" property="username"/>
+			<result column="sex" property="sex"/>
+			<result column="address" property="address"/>		
+		</association>	
+	</resultMap>
+	<!-- 查询订单信息用resultMap -->
+	<select id="findOrdersUserwithRM" resultMap="OrdersUserResultMap">
+		select t1.*,t2.username,t2.sex,t2.address 
+		from orders t1
+		inner join user t2 on t1.user_id=t2.id 
+		order by t1.id
+	</select>
+	
+	
+	<!-- 关联查询resultMap定义的一对多定义 -->
+	<!-- 包括订单信息，用户信息，订单明细信息.其中用了ResultMap的继承（所以下面注释的订单和用户信息部分可以删除） -->
+	<resultMap type="cn.ylt.ssm.po.Orders" id="OrdersUserAndDetailsResultMap" extends="OrdersUserResultMap">
+		<!-- 配置订单信息，id标签标识唯一标识的列。如果多个列组成唯一标识就配置多个id元素
+		<id column="id" property="id"/> 
+		<result column="user_id" property="user_id"/>
+		<result column="number" property="number"/>
+		<result column="createtime" property="createtime"/>
+		<result column="note" property="note"/>
+		 配置用户信息
+		association标识一对一信息 ，其中property指定映射到对象中的那个属性，
+		<association property="user" javaType="cn.ylt.ssm.po.User">
+			<id column="user_id" property="id"/>
+			<result column="username" property="username"/>
+			<result column="sex" property="sex"/>
+			<result column="address" property="address"/>		
+		</association>	-->
+		<!-- 配置订单明细,collection这里配置一对多，property同上， -->
+		<collection property="orderdetails" ofType="cn.ylt.ssm.po.OrderDetail">
+			<id column="orderdetail_id"  property="id"/>
+			<result column="orders_id" property="orders_id"/>
+			<result column="items_id" property="items_id"/>
+			<result column="items_num" property="items_cum"/>
+		</collection>
+	</resultMap>
+	<!-- 查询订单关联的用户和订单的明细 -->
+	<select id="findOrdersUserAndDetails" resultMap="OrdersUserAndDetailsResultMap">
+		select t1.*,t2.username,t2.sex,t2.address,t3.id orderdetail_id,t3.items_id,t3.items_num,t3.orders_id
+		from orders t1
+		inner join user t2 on t1.user_id=t2.id 
+        inner join orderdetail t3 on t1.id=t3.orders_id 
+		order by t1.id
+	</select>
+	
+	
+	<!-- 查询用户和商品信息
+	1.此处用了复杂的配置，如果针对订单明细，其实可以用resultType单独为查询出来的结果定义一个扩展pojo对象专门来接就简单多了，
+	2。如果针对但是查询有特殊要求，比如树结构或者鼠标移动事件,一个结果中包含多个list的子级list对象，则下面方法OK -->
+	<resultMap type="cn.ylt.ssm.po.User" id="UserAndItemsResultMap">
+		<!-- 用户信息 -->
+		<id column="user_id" property="id"/>
+		<result column="username" property="username"/> 
+		<result column="sex" property="sex"/> 
+		<result column="address" property="address"/> 
+		<!-- 订单信息 -->
+		<collection property="ordersList" ofType="cn.ylt.ssm.po.Orders">
+			<id column="id" property="id"/>
+			<result column="user_id" property="user_id"/>
+			<result column="number" property="number"/>
+			<result column="createtime" property="createtime"/>
+			<result column="note" property="note"/>
+			<!-- 订单明细 -->
+			<collection property="orderdetails" ofType="cn.ylt.ssm.po.OrderDetail">
+				<id column="orderdetail_id" property="id"/>
+				<result column="id" property="orders_id"/>
+				<result column="items_id" property="items_id"/>
+				<result column="items_num" property="items_cum"/>
+				<!-- 商品信息 -->
+				<association property="items" javaType="cn.ylt.ssm.po.Items">
+					<id column="items_id" property="id"/>
+					<result column="items_name" property="name"/>
+					<result column="items_price" property="price"/>
+					<result column="items_detail" property="detail"/>
+				</association>
+			</collection>
+		</collection>
+		
+	</resultMap>
+	
+	<!-- 查询订用户及购买的商品信息，使用resultMap -->
+	<select id="findUserAndItemsResultMap" resultMap="UserAndItemsResultMap">
+		select t1.*,t2.username,t2.sex,t2.address,t3.id orderdetail_id,
+        t3.items_id,t3.items_num,t3.orders_id,t4.name items_name,t4.detail items_detail,t4.price items_price
+		from orders t1
+		inner join user t2 on t1.user_id=t2.id 
+        inner join orderdetail t3 on t1.id=t3.orders_id 
+        inner join items t4 on t3.items_id=t4.id
+		order by t1.id
+	</select>
+	
+	
+	<!-- 设计被延迟加载调用的sql语句--> 
+	<select id="findUserById" resultType="cn.ylt.ssm.po.User" parameterType="int">
+		select * from user where id=#{id}
+	</select>
+	
+	<!-- 延迟加载的resultMap -->
+	<resultMap type="cn.ylt.ssm.po.Orders" id="OrdersUserLazyLoadingResultMap">
+			<id column="id" property="id"/>
+			<result column="user_id" property="user_id"/>
+			<result column="number" property="number"/>
+			<result column="createtime" property="createtime"/>
+			<result column="note" property="note"/>
+			<!-- 实现用户的延迟加载
+			select:指定延迟加载需要执行的statement的id(根据user_id查询用户信息的statement)
+			如果该id在本文档中没有找到在别的文档中需要加上别的文档的namespace，
+			column：订单信息中关联用户信息查询的列	
+			此处演示一对一，一对多一样collection-->				 
+			<association property="user" javaType="cn.ylt.ssm.po.User" select="findUserById" column="user_id">
+			</association>
+	</resultMap>
+	
+	<!-- 查询订单关联用户，用户信息需要延迟加载   -->
+	<select id="findOrdersUserLazyLoading" resultMap="OrdersUserLazyLoadingResultMap" >
+		select * from orders
+	</select>
+	
+</mapper>
+
+

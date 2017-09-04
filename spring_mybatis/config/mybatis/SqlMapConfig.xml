@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+<!-- 实现延迟加载的开关和开启二级缓存总开关 -->
+<settings>
+<setting name="lazyLoadingEnabled" value="true"/>
+<setting name="aggressiveLazyLoading" value="false"/>
+<!--<setting name="cacheEnabled" value="true"/>-->
+</settings>
+
+<!-- 定义别名 -->
+<typeAliases>
+<!-- 单个定义别名（不常用） -->
+<!--  <typeAlias type="cn.itcast.mybatis.pojo.City" alias="city"/>-->
+<!-- 通过包批量定义别名(常用)，根据类名自动生成 别名，首字母不区分大小写-->
+<!--  <package name="cn.itcast.mybatis.pojo"/>-->
+</typeAliases>
+
+
+<!-- 加载映射文件 -->
+<mappers>
+<!-- 单文件方式加载 
+<mapper resource="OrdersMapperCustom.xml"/>-->
+<!-- mapper的批量加载，会自动加载该包下的所有mapper.xml配置文件 
+前提:配置文件名和类名必须一致，接口方法和statement方法id一致，配置文件和接口文件必须在一个目录，使用mapper代理调用程序.
+但是：如果用spring的批量扫描（1。配置mapper文件和接口类对应关系，2.自动生成接口代理类）在spring的applicationContext中配置了，下面的代码依然可以删除
+-->
+<!--  <package name="cn.ylt.ssm.mapper"/>-->
+</mappers>
+
+</configuration>
